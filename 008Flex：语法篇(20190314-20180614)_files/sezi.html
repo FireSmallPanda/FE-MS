@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html>
+    <style type="text/css">
+        body{
+            background-color: gray;
+            display: flex;
+        }
+        .box{
+            background-color: #FFF;
+            width: 80px;
+            height: 80px;
+            border-radius:3px;
+            margin-bottom: 10px;
+        }
+        .point{
+            background-color:#000;
+            width: 20px;
+            height: 20px;
+            border-radius:50%;
+        }
+        .box1{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .box2{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content:space-around;
+        }
+        .box3{
+            display: flex;
+            justify-content:space-around;
+        }
+        .box3 .point:nth-child(2) {
+            display: flex;
+            align-self: center;
+        }
+        .box3 .point:nth-child(3) {
+            display: flex;
+            align-self: flex-end;
+        }
+        .box4 {
+            display: flex;
+            flex-wrap: wrap;
+            align-content: space-around;
+        }
+
+        .box4 .column {
+            flex-basis: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        .box5 {
+            display: flex;
+            justify-content: space-around;
+        }
+        .box5 .column:nth-child(1) {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .box5 .column:nth-child(2) {
+            display: flex;
+            align-self: center;
+        }
+        .box5 .column:nth-child(3) {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .box6 {
+            display: flex;
+            justify-content: space-around;
+        }
+        .box6 .column{
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+    </style>
+<body>
+    <div>
+        <div class="box box1">
+            <div class="point"></div>
+        </div>
+        <div class="box box2">
+            <div class="point"></div>
+            <div class="point"></div>
+        </div>
+        <div class="box box3">
+            <div class="point"></div>
+            <div class="point"></div>
+            <div class="point"></div>
+        </div>
+        <div class="box box4">
+            <div class="column">
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+            <div class="column">
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+        </div>
+        <div class="box box5">
+            <div class="column">
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+            <div class="column">
+                <div class="point"></div>
+            </div>
+            <div class="column">
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+        </div>
+        <div class="box box6">
+            <div class="column">
+                <div class="point"></div>
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+            <div class="column">
+                <div class="point"></div>
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

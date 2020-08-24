@@ -1,0 +1,181 @@
+<html>
+<head>
+  <title>025B 网络攻击-XSS攻击详解 WEB安全</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/601568 (zh-CN, DDL); Windows/6.1.1 (Win64); EDAMVersion=V2;"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+<body>
+<a name="3769"/>
+<h1>025B 网络攻击-XSS攻击详解 WEB安全</h1>
+
+<div><span>
+  <div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="color:rgb(70, 70, 70);background:url(https://www.cnblogs.com/skins/summergarden/images/bg.jpg) repeat-x rgb(250, 247, 239);text-size-adjust:none;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:14px;"><div style="min-width:unset;"><div style="text-align:left;min-width:unset;"><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div><div><div style="text-overflow:ellipsis;overflow:hidden;"><div>
+		<h1 style="margin:0px;padding:0px;clear:both;padding-left:5px;margin-bottom:15px;font-size:130%;font-weight:bold;float:left;line-height:1.5em;width:100%;">
+			
+<a href="https://www.cnblogs.com/mao2080/p/9460397.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(100, 102, 179);">网络攻击-XSS攻击详解</a>
+
+		</h1>
+		<div style="margin:0px;padding:0px;clear:both;"></div>
+		<div style="margin:0px;border-bottom:1px solid rgb(0, 0, 0);padding:5px 2px 5px 5px;font-size:14px;line-height:1.5;color:rgb(57, 57, 57);">
+			
+<div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;">
+    <div style="margin:0px;padding:0px;line-height:30px;">
+<div style="margin:0px;padding:5px 0 5px 5px;border:1px dashed #FF7F50;">特别提示：本人博客部分有参考网络其他博客，但均是本人亲手编写过并验证通过。如发现博客有错误，请及时提出以免误导其他人，谢谢！欢迎转载，但记得标明文章出处：<a href="http://www.cnblogs.com/mao2080/" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">http://www.cnblogs.com/mao2080/</a></div>
+<h2 style="padding:0px;line-height:1.5;font-size:21px;font-weight:bold;margin:10px 0px;">1、基础概念</h2>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　XSS（Cross Site Scripting）攻击全称跨站脚本攻击，是为不和层叠样式表(Cascading Style Sheets, CSS)的缩写混淆，故将跨站脚本攻击缩写为XSS，XSS是一种经常出现在web应用中的计算机安全漏洞，它允许恶意web用户将代码植入到提供给其它用户使用的页面中。比如这些代码包括HTML代码和客户端脚本。（摘自百度百科）</p>
+<h2 style="padding:0px;line-height:1.5;font-size:21px;font-weight:bold;margin:10px 0px;">2、主要危害</h2>
+<div style="margin:0px;padding:0px;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　1、盗取各类用户帐号，如机器登录帐号、用户网银帐号、各类管理员帐号<br style="margin:0px;padding:0px;"/>　　2、控制企业数据，包括读取、篡改、添加、删除企业敏感数据的能力<br style="margin:0px;padding:0px;"/>　　3、盗窃企业重要的具有商业价值的资料<br style="margin:0px;padding:0px;"/>　　4、非法转账<br style="margin:0px;padding:0px;"/>　　5、强制发送电子邮件<br style="margin:0px;padding:0px;"/>　　6、网站挂马<br style="margin:0px;padding:0px;"/>　　7、控制受害者机器向其它网站发起攻击</p>
+
+
+
+
+
+
+</div>
+<div style="margin:0px;padding:0px;">
+<h2 style="padding:0px;line-height:1.5;font-size:21px;font-weight:bold;margin:10px 0px;">3、攻击方式</h2>
+<h3 style="padding:0px;line-height:1.5;font-size:16px;font-weight:bold;margin:10px 0px;">　　1、反射型</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　反射型XSS，也叫非持久型XSS，是指发生请求时，XSS代码出现在请求URL中，作为参数提交到服务器，服务器解析并响应。响应结果中包含XSS代码，最后浏览器解析并执行。从概念上可以看出，反射型XSS代码是首先出现在URL中的，然后需要服务端解析，最后需要浏览器解析之后XSS代码才能够攻击。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　这类通常使用URL，具体流程：</p>
+<div style="margin:0px;padding:0px;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　1、Alice给Bob发送一个恶意构造了Web的URL。<br style="margin:0px;padding:0px;"/>　　2、Bob点击并查看了这个URL。<br style="margin:0px;padding:0px;"/>　　3、恶意页面中的JavaScript打开一个具有漏洞的HTML页面并将其安装在Bob电脑上。<br style="margin:0px;padding:0px;"/>　　4、具有漏洞的HTML页面包含了在Bob电脑本地域执行的JavaScript。<br style="margin:0px;padding:0px;"/>　　5、Alice的恶意脚本可以在Bob的电脑上执行Bob所持有的权限下的命令。</p>
+
+
+
+
+
+
+</div>
+<div style="margin:0px;padding:0px;">　　举个列子：</div>
+<div style="margin:0px;padding:0px;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　http://localhost:8080/helloController/search?name=&lt;script&gt;alert(&quot;hey!&quot;)&lt;/script&gt;</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　http://localhost:8080/helloController/search?name=&lt;img src='w.123' onerror='alert(&quot;hey!&quot;)'&gt;</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　http://localhost:8080/helloController/search?name=&lt;a onclick='alert(&quot;hey!&quot;)'&gt;点我&lt;/a&gt;</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　服务端代码片段，只做了一个简单的字符串连接就返回给客户端。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811173613221-1624378045.png" type="image/png" data-filename="976001-20180811173613221-1624378045.png" height="541" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　我们可以看到Google Chrome是有做处理的相对比较安全，但是Firefox就没有。</p>
+
+
+
+
+
+
+</div>
+<div style="margin:0px;padding:0px;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811171704722-737520172.png" type="image/png" data-filename="976001-20180811171704722-737520172.png" height="606" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811171720157-1963269620.png" type="image/png" data-filename="976001-20180811171720157-1963269620.png" height="605" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811171929834-200684964.png" type="image/png" data-filename="976001-20180811171929834-200684964.png" height="605" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+
+
+
+
+
+
+</div>
+<h3 style="padding:0px;line-height:1.5;font-size:16px;font-weight:bold;margin:10px 0px;">　　2、存储型</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　存储型XSS，也叫持久型XSS，主要是将XSS代码发送到服务器（不管是数据库、内存还是文件系统等。），然后在下次请求页面的时候就不用带上XSS代码了。最典型的就是留言板XSS。用户提交了一条包含XSS代码的留言到数据库。当目标用户查询留言时，那些留言的内容会从服务器解析之后加载出来。浏览器发现有XSS代码，就当做正常的HTML和JS解析执行。XSS攻击就发生了。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　常用来干嘛？</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　1、窃取用户信息，如cookie，token，账号密码等。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　例如：张三发了一篇帖子，李四进行回复：但内容却是一段js脚本，这篇帖子被他人浏览的时候就会中招，例子中的只是一个alert()，但脚本可以写的比较复杂一点盗用用户cookie等等操作。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811161936913-1572944108.png" type="image/png" data-filename="976001-20180811161936913-1572944108.png" height="645" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811161821509-1620948427.png" type="image/png" data-filename="976001-20180811161821509-1620948427.png" height="621" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　2、除了这种hacker还有个很惯用的伎俩，例如存储型XSS生成一些诱人的图片，文字（你懂的！），然后用户去点击的时候就可以执行某些坏事，窃取信息或者诱导到钓鱼网站。</p>
+<pre style="white-space:pre-wrap;overflow-wrap:break-word;margin:0px;padding:0px;">　　&lt; img onclick=&quot;window.location.href='http://www.baidu.com'&quot; width='300' src='img/webwxgetmsgimg.jpg'/&gt;</pre>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811163711085-2044434057.png" type="image/png" data-filename="976001-20180811163711085-2044434057.png" height="651" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811163733106-1179998230.png" type="image/png" data-filename="976001-20180811163733106-1179998230.png" height="621" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　点击图片后，就会进入到目标网站了。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<img src="025B 网络攻击-XSS攻击详解 WEB安全_files/976001-20180811163742523-848373955.png" type="image/png" data-filename="976001-20180811163742523-848373955.png" height="621" style="margin:0px;padding:0px;border:0px;height:auto;max-width:300px;" width="900"/></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　3、劫持流量实现恶意跳转</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　用户打开的网址，会默认跳转至指定网站，脚本如下：</p>
+<pre style="white-space:pre-wrap;overflow-wrap:break-word;margin:0px;padding:0px;">　&lt;script&gt;window.location.href=&quot;http://www.baidu.com&quot;;&lt;/script&gt;</pre>
+</div>
+<h2 style="padding:0px;line-height:1.5;font-size:21px;font-weight:bold;margin:10px 0px;">4、防范手段</h2>
+<h3 style="padding:0px;line-height:1.5;font-size:16px;font-weight:bold;margin:10px 0px;">　　1、入参字符过滤</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　在源头控制，把输入的一些不合法的东西都过滤掉，从而保证安全性。如移除用户提交的的DOM属性如onerror，移除用户上传的Style节点，&lt;iframe&gt;, &lt;script&gt;，&lt;a&gt;节点等</p>
+<h3 style="padding:0px;line-height:1.5;font-size:16px;font-weight:bold;margin:10px 0px;">　　2、出参进行编码</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　如果源头没控制好，就得后期补救了：像一些常见的符号，如&lt;&gt;在输出的时候要对其进行转换编码，这样做浏览器是不会对该标签进行解释执行的，同时也不影响显示效果。例如：对&lt;&gt;做编码如：&quot;&lt;&quot;用:&quot;&amp;lt;&quot;,&quot;&gt;&quot;用:&quot;&amp;gt;&quot;来代替。</p>
+<h3 style="padding:0px;line-height:1.5;font-size:16px;font-weight:bold;margin:10px 0px;">　　3、入参长度限制</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　通过以上的案例我们不难发现xss攻击要能达成往往需要较长的字符串，因此对于一些可以预期的输入可以通过限制长度强制截断来进行防御。</p>
+<h3 style="padding:0px;line-height:1.5;font-size:16px;font-weight:bold;margin:10px 0px;">　　4、设置cookie httponly为true</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　具体详情请参考：<a href="https://www.cnblogs.com/mao2080/p/9520185.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">https://www.cnblogs.com/mao2080/p/9520185.html</a></p>
+<h2 style="padding:0px;line-height:1.5;font-size:21px;font-weight:bold;margin:10px 0px;">5、参考网站</h2>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<a href="https://www.cnblogs.com/unclekeith/p/7750681.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">https://www.cnblogs.com/unclekeith/p/7750681.html</a></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<a href="https://baike.baidu.com/item/XSS%E6%94%BB%E5%87%BB/954065?fr=aladdin" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">https://baike.baidu.com/item/XSS%E6%94%BB%E5%87%BB/954065?fr=aladdin</a></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<a href="https://zhuanlan.zhihu.com/p/26177815" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">https://zhuanlan.zhihu.com/p/26177815</a></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　<a href="https://www.imooc.com/learn/812" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">https://www.imooc.com/learn/812</a></p>
+</div>
+</div>
+<div style="display:block;margin:0px;padding:0px;"><div style="margin:0px;padding:5px 0 5px 5px;line-height:40px;background-color:#f5f5d1;border:1px dashed #ff0000;">个性签名：1.01的365次方=37.78343433289 &gt;&gt;&gt;1
+
+0.99的365次方= 0.02551796445229 &lt;&lt;&lt;1
+
+每天进步一点点的目标，贵在坚持…</div></div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;"><div style="margin:0px;padding:0px;margin-bottom:10px;">
+    分类: 
+            <a href="https://www.cnblogs.com/mao2080/category/982204.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank">网络安全</a></div>
+<div style="margin:0px;padding:0px;font-size:9pt;color:rgb(128, 128, 128);margin-top:0px;">
+    标签: 
+            <a href="https://www.cnblogs.com/mao2080/tag/xss/" style="margin:0px;padding:0px;text-decoration:underline;margin-left:5px;color:rgb(76, 79, 139);">xss</a></div>
+
+    <div style="margin:0px;padding:0px;">
+<div style="margin:0px;margin-bottom:10px;margin-top:10px;border:1px dashed rgb(192, 192, 192);font-size:12px;text-align:center;padding:10px 0px;width:320px;">
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(45, 174, 191);border:none;color:rgb(255, 255, 255);">好文要顶</a>
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(227, 49, 0);border:none;color:rgb(255, 255, 255);">关注我</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(255, 181, 21);border:none;color:rgb(255, 255, 255);">收藏该文</a>
+    <a href="#" style="margin:0px;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;vertical-align:middle;text-decoration:none;background:none;box-shadow:none;text-shadow:none;padding:3px 2px;border:none;color:rgb(255, 255, 255);" title="分享至新浪微博"><img src="025B 网络攻击-XSS攻击详解 WEB安全_files/icon_weibo_24.png" type="image/png" data-filename="icon_weibo_24.png" height="24" style="margin:0px;padding:0px;height:auto;vertical-align:middle;margin-left:5px;box-shadow:none;border:none;max-width:300px;" width="24"/></a>
+    <a href="#" style="margin:0px;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;vertical-align:middle;text-decoration:none;background:none;box-shadow:none;text-shadow:none;padding:3px 2px;border:none;color:rgb(255, 255, 255);" title="分享至微信"><img src="025B 网络攻击-XSS攻击详解 WEB安全_files/wechat.png" type="image/png" data-filename="wechat.png" height="24" style="margin:0px;padding:0px;width:24px;box-shadow:none;margin-left:5px;vertical-align:middle;height:24px;border:medium none;max-width:300px;" width="24"/></a>
+</div>
+<div style="margin:0px;padding:0px;float:left;width:280px;margin-top:0px;margin-bottom:10px;color:rgb(0, 0, 0);margin-left:0px;font-size:12px;">
+    <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/mao2080/" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" target="_blank"><img src="025B 网络攻击-XSS攻击详解 WEB安全_files/20160608155746.png" type="image/jpeg" data-filename="20160608155746.png" height="48" style="margin:0px;padding:0px;height:auto;vertical-align:top;float:left;margin-right:5px;padding-top:5px;padding-left:2px;border:0px;max-width:300px;" width="48"/></a>
+        <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/mao2080/" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;">mao2080</a><br style="margin:0px;padding:0px;"/>
+            <a href="https://home.cnblogs.com/u/mao2080/followees/" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;">关注 - 6</a><br style="margin:0px;padding:0px;"/>
+            <a href="https://home.cnblogs.com/u/mao2080/followers/" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;">粉丝 - 15</a>
+        </div>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;"></div>
+    <div style="margin:0px;padding:0px;">
+                <a href="#" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;">+加关注</a>
+    </div>
+</div>
+<div style="margin:0px;padding:0px;float:right;margin-bottom:10px;margin-right:30px;font-size:12px;width:125px;text-align:center;margin-top:10px;">
+    <div style="margin:0px;padding:0px;float:left;width:46px;height:52px;background:url(https://static.cnblogs.com/images/upup.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">1</span>
+    </div>
+    <div style="margin:0px;padding:0px;float:right;margin-left:20px;width:46px;height:52px;background:url(https://static.cnblogs.com/images/downdown.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+</div>
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;line-height:1.8;font-size:12px;">
+
+    <a href="https://www.cnblogs.com/mao2080/p/9314055.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:none;">« </a> 上一篇：    <a href="https://www.cnblogs.com/mao2080/p/9314055.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" title="发布于 2018-08-04 14:59">IDEA下载安装及绿色方法</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/mao2080/p/9507757.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:none;">» </a> 下一篇：    <a href="https://www.cnblogs.com/mao2080/p/9507757.html" style="margin:0px;padding:0px;color:rgb(100, 102, 179);text-decoration:underline;" title="发布于 2018-08-26 15:21">MySQL数据库索引</a>
+
+</div>
+</div>
+		</div>
+		<div style="margin:0px;padding:0px;clear:both;float:right;width:100%;text-align:right;padding-right:5px;color:rgb(102, 102, 102);margin-top:5px;">posted @ 
+<span style="margin:0px;padding:0px;">2018-08-11 17:26</span> <a href="https://www.cnblogs.com/mao2080/" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">mao2080</a> 阅读(<span style="margin:0px;padding:0px;">10414</span>) 评论(<span style="margin:0px;padding:0px;">7</span>) <a href="https://i.cnblogs.com/EditPosts.aspx?postid=9460397" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);"> 编辑</a> <a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">收藏</a>
+</div>
+	</div></div></div></div></div></div></div></div></div></div>
+</div>
+</span>
+</div></body></html> 
